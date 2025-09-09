@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 from taming.data.base import ImagePaths, NumpyPaths, ConcatDatasetWithIndex
 
 
+
 class CustomBase(Dataset):
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -66,15 +67,15 @@ class DancingSpritesDataset(Dataset):
         self.include_labels = include_labels
         
         if split == 'train':
-            with h5py.File(f'{root}/train.h5','r') as dataset:
-                self.images = dataset[split]['images'][()]
-                if self.include_labels:
-                    self.labels = dataset[split]['labels'][()]
+            dataset = h5py.File(f'{root}/train.h5','r')
+            self.images = dataset[split]['images']
+            if self.include_labels:
+                self.labels = dataset[split]['labels']
         elif split == 'test':
-            with h5py.File(f'{root}/test.h5','r') as dataset:
-                self.images = dataset[split]['images'][()]
-                self.labels = dataset[split]['labels'][()]
-                self.masks = dataset[split]['masks'][()]
+            dataset = h5py.File(f'{root}/test.h5','r')
+            self.images = dataset[split]['images']
+            self.labels = dataset[split]['labels']
+            #self.masks = dataset[split]['masks']
         
         if num_train_images:
             inds = np.sort((torch.randperm(len(self.images))).cuda()[:num_train_images].cpu().numpy())
@@ -82,13 +83,17 @@ class DancingSpritesDataset(Dataset):
             self.images = self.images[inds]
             if self.split =="test":
                 self.labels = self.labels[inds]
-                self.masks = self.masks[inds]
+                #self.masks = self.masks[inds]
             
         print(f'{split} dataset has # {len(self.images)}')
         
+        # normalize = transforms.Compose([
+        #     transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+        # ])
         normalize = transforms.Compose([
-            transforms.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225)),
+            transforms.Normalize((0.5,)*3, (0.5,)*3),
         ])
+        
         self.transform = normalize if transform is None else transform
         
         
@@ -105,26 +110,30 @@ class DancingSpritesDataset(Dataset):
         # transform PIL -> normalized tensor
         transformed_image=self.images[idx][start_idx:start_idx+self.video_len]
         transformed_image=F.resize(torch.tensor(rearrange(transformed_image, 'f h w c -> f c h w')/255.0), self.img_size)
-        
         mask = torch.zeros_like(transformed_image)
         if self.split =="test" or self.include_labels:
             label = self.labels[idx][start_idx:start_idx+self.video_len]
         if self.split == "test":
-            mask = F.resize(torch.tensor(self.masks[idx][start_idx:start_idx+self.video_len]).squeeze(), self.img_size)
+            #mask = F.resize(torch.tensor(self.masks[idx][start_idx:start_idx+self.video_len]).squeeze(), self.img_size)
+            pass
         
         source = transformed_image[:self.video_len]
         if self.split == "train" and not self.include_labels:
             return self.transform(source.float()).squeeze()
         else:
-            return self.transform(source.float()).squeeze(), label, mask.squeeze()
-        
+            return self.transform(source.float()).squeeze() , label, 0
 
-if __name__=="__main__":
+class DSPTrain(DancingSpritesDataset):
+    def __init__(self, size, video_len, root="moving-sprites", num_train_images=None, transform=None, stochastic_sample=True, include_labels=False):
+        super().__init__(root=root, split='train', img_size=size, video_len=video_len, num_train_images=num_train_images, transform=transform, stochastic_sample=stochastic_sample, include_labels=include_labels)
+
+class DSPTest(DancingSpritesDataset):
+    def __init__(self, size, video_len, root="moving-sprites", num_train_images=None, transform=None, stochastic_sample=True, include_labels=False):
+        super().__init__(root=root, split='test', img_size=size, video_len=video_len, num_train_images=num_train_images, transform=transform, stochastic_sample=stochastic_sample, include_labels=include_labels)
+
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--image-size", type=int, default=128)
-    parser.add_argument("--video-len", type=int, default=5)
-    parser.add_argument("--dataset-path", type=str, default="moving-sprites")
-    args = parser.parse_args()
-    
-    train_dataset = DancingSpritesDataset(args.dataset_path, "train", args.image_size, args.video_len)
+invTrans = transforms.Compose([ transforms.Normalize(mean = [ 0., 0., 0. ],
+                                                     std = [ 1/0.229, 1/0.224, 1/0.225 ]),
+                                transforms.Normalize(mean = [ -0.485, -0.456, -0.406 ],
+                                                     std = [ 1., 1., 1. ]),
+                               ])

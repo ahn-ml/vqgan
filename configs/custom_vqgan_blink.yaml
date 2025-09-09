@@ -2,8 +2,10 @@ model:
   base_learning_rate: 4.5e-6
   target: taming.models.vqgan.VQModel
   params:
-    embed_dim: 96 # token size
-    n_embed: 1024 # number of tokens
+    sane_index_shape: true
+    embed_dim: 96
+    n_embed: 1024
+    image_key: pixel_values
     ddconfig:
       double_z: False
       z_channels: 96
@@ -31,19 +33,26 @@ data:
     batch_size: 16
     num_workers: 8
     train:
-      target: taming.data.dancing_sprites.DSPTrain
+      target: taming.data.blinking_pattern.BlinkingTrain
       params:
-        root: /data/hslee/discrete-jepa/runner/datasets/data/dancing-sprites-reasoning
+        root: /data/hslee/discrete-jepa/runner/datasets/data/blinking_balls/4Balls_6Frames_Blinking_Count
         video_len: 1
         stochastic_sample: True
-        include_labels: False
         size: 64
+        output_discrete_pixel_value: False
     validation:
-      target: taming.data.dancing_sprites.DSPTest
+      target: taming.data.blinking_pattern.BlinkingTest
       params:
-        root: /data/hslee/discrete-jepa/runner/datasets/data/dancing-sprites-reasoning
+        root: /data/hslee/discrete-jepa/runner/datasets/data/blinking_balls/4Balls_6Frames_Blinking_Count
         video_len: 1
         stochastic_sample: True
-        include_labels: True
         size: 64
+        output_discrete_pixel_value: False
 
+worldmodel:
+  lr: 1e-3
+  final_lr: 1e-6
+  warmup_steps_pct: 0.15
+  total_steps: 15000
+
+seed: 2024
