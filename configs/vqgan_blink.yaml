@@ -2,17 +2,17 @@ model:
   base_learning_rate: 4.5e-6
   target: taming.models.vqgan.VQModel
   params:
-    sane_index_shape: true
-    embed_dim: 96
-    n_embed: 1024
+    sane_index_shape: true # return quantized image as [B H W]
+    embed_dim: 96 # return quantized image as [B H W]
+    n_embed: 1024 # return quantized image as [B H W]
     image_key: null
     ddconfig:
       double_z: False
-      z_channels: 96
-      resolution: 64
+      z_channels: 96 # latent dim before quant: z_channels -> embed_dim --quant-> embed_dim -> z_channels
+      resolution: 64 # image size
       in_channels: 3
       out_ch: 3
-      ch: 96
+      ch: 96  # encoder/decoder embedding channel: Conv(in_channels -> ch) or ConvTrans(ch -> out_ch)
       ch_mult: [1,2,2,4,4]  # num_down = len(ch_mult)-1
       num_res_blocks: 2
       attn_resolutions: [16]
@@ -49,7 +49,7 @@ data:
         size: 64
         output_discrete_pixel_value: False
 
-worldmodel:
+worldmodel:  # unused when pretrain
   lr: 1e-3
   final_lr: 1e-6
   warmup_steps_pct: 0.15

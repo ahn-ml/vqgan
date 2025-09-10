@@ -3,8 +3,8 @@ model:
   target: taming.models.vqgan.VQModel
   params:
     sane_index_shape: true # return quantized image as [B H W]
-    embed_dim: 96 # tokenizer dim
-    n_embed: 1024 # codebook vocab size 
+    embed_dim: 96 # return quantized image as [B H W]
+    n_embed: 1024 # return quantized image as [B H W]
     image_key: null
     ddconfig:
       double_z: False 
