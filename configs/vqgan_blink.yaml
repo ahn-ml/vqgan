@@ -5,7 +5,7 @@ model:
     sane_index_shape: true
     embed_dim: 96
     n_embed: 1024
-    image_key: pixel_values
+    image_key: null
     ddconfig:
       double_z: False
       z_channels: 96

@@ -74,7 +74,18 @@ class VQModel(pl.LightningModule):
         return dec, diff
 
     def get_input(self, batch, k):
-        x = batch[k]
+        if isinstance(batch,torch.Tensor):
+            data = batch
+            assert k is None
+        elif isinstance(batch,tuple) or isinstance(batch,list):
+            data = batch[0]
+        else:
+            data = batch
+
+        if k is not None:
+            x = data[k]
+        else:
+            x = data
         if len(x.shape) == 3:
             x = x[..., None]
         #x = x.permute(0, 3, 1, 2).to(memory_format=torch.contiguous_format)

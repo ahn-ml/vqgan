@@ -236,26 +236,21 @@ class RNEMBallDataset(Dataset):
                 ][start_idx : start_idx + self.video_length]
             # example = torch.stack(frames)
 
-        if self.mode in ["training", "train"]:
+        if self.mode=="train" or self.mode=="training":
             if not self.output_discrete_pixel_value:
-                return {"pixel_values": example["pixel_values"].squeeze()}
-            return {
-                "pixel_values": example["pixel_values"].squeeze(),
-                "pixel_values_discrete": example["pixel_values_discrete"].squeeze(),
-            }
+                return example["pixel_values"].squeeze()
+            return example["pixel_values_discrete"].squeeze()
+            
 
         else:
             if not self.output_discrete_pixel_value:
                 return (
-                    {"pixel_values": example["pixel_values"].squeeze()},
+                    example["pixel_values"].squeeze(),
                     target.squeeze(),
                     0,
                 )
             return (
-                {
-                    "pixel_values": example["pixel_values"].squeeze(),
-                    "pixel_values_discrete": example["pixel_values_discrete"].squeeze(),
-                },
+                example["pixel_values_discrete"].squeeze(),
                 target.squeeze(),
                 0,
             )

@@ -1,0 +1,49 @@
+model:
+  base_learning_rate: 4.5e-6
+  target: taming.models.vqgan.VQModel
+  params:
+    sane_index_shape: true # return quantized image as [B H W]
+    embed_dim: 96 # tokenizer dim
+    n_embed: 1024 # codebook vocab size 
+    image_key: null
+    ddconfig:
+      double_z: False 
+      z_channels: 96  # latent dim before quant: z_channels -> embed_dim --quant-> embed_dim -> z_channels
+      resolution: 64  # image size
+      in_channels: 3
+      out_ch: 3
+      ch: 128  # encoder/decoder embedding channel: Conv(in_channels -> ch) or ConvTrans(ch -> out_ch)
+      ch_mult: [1,2,2,4,4]  # num_down = len(ch_mult)-1
+      num_res_blocks: 2
+      attn_resolutions: [16]
+      dropout: 0.0
+
+    lossconfig:
+      target: taming.modules.losses.vqperceptual.VQLPIPSWithDiscriminator
+      params:
+        disc_conditional: False
+        disc_in_channels: 3
+        disc_start: 10000
+        disc_weight: 0.8
+        codebook_weight: 1.0
+data:
+  target: main.DataModuleFromConfig
+  params:
+    batch_size: 16
+    num_workers: 8
+    train:
+      target: taming.data.pusht_trajectory.PushtDataset
+      params:
+        {write parameters here}
+    validation:
+      target: taming.data.pusht_trajectory.PushtDatasetWithFactors
+      params:
+        {write parameters here}
+
+worldmodel: # unused when pretrain
+  lr: 1e-3
+  final_lr: 1e-6
+  warmup_steps_pct: 0.15
+  total_steps: 15000
+
+seed: 2024
