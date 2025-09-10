@@ -4,7 +4,7 @@ model:
   params:
     sane_index_shape: true # return quantized image as [B H W]
     embed_dim: 96 # return quantized image as [B H W]
-    n_embed: 1024 # return quantized image as [B H W]
+    n_embed: 512 # return quantized image as [B H W]
     image_key: null
     ddconfig:
       double_z: False 
@@ -12,8 +12,8 @@ model:
       resolution: 64  # image size
       in_channels: 3
       out_ch: 3
-      ch: 128  # encoder/decoder embedding channel: Conv(in_channels -> ch) or ConvTrans(ch -> out_ch)
-      ch_mult: [1,2,2,4,4]  # num_down = len(ch_mult)-1
+      ch: 96  # encoder/decoder embedding channel: Conv(in_channels -> ch) or ConvTrans(ch -> out_ch)
+      ch_mult: [1,2,4,4]  # num_down = len(ch_mult)-1
       num_res_blocks: 2
       attn_resolutions: [16]
       dropout: 0.0
@@ -29,16 +29,22 @@ model:
 data:
   target: main.DataModuleFromConfig
   params:
-    batch_size: 16
+    batch_size: 32
     num_workers: 8
     train:
-      target: taming.data.pusht_trajectory.PushtDataset
+      target: taming.data.pusht_trajectory.PushTDataset
       params:
-        {write parameters here}
+        root: /data/hslee/discrete-jepa/runner/datasets/data/pusht_noise
+        img_size: 64
+        sequence_length: 1
+        stride: 10
     validation:
-      target: taming.data.pusht_trajectory.PushtDatasetWithFactors
+      target: taming.data.pusht_trajectory.PushTDatasetWithFactors
       params:
-        {write parameters here}
+        root: /data/hslee/discrete-jepa/runner/datasets/data/pusht_noise
+        img_size: 64
+        sequence_length: 1
+        stride: 10
 
 worldmodel: # unused when pretrain
   lr: 1e-3

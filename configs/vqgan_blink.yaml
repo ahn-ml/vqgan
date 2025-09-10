@@ -4,7 +4,7 @@ model:
   params:
     sane_index_shape: true # return quantized image as [B H W]
     embed_dim: 96 # return quantized image as [B H W]
-    n_embed: 1024 # return quantized image as [B H W]
+    n_embed: 512 # return quantized image as [B H W]
     image_key: null
     ddconfig:
       double_z: False

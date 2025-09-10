@@ -178,6 +178,8 @@ class DataModuleFromConfig(pl.LightningDataModule):
             batch_size=self.batch_size,
             num_workers=self.num_workers,
             shuffle=True,
+            persistent_workers=True,
+            pin_memory=True,
             collate_fn=custom_collate,
         )
 
@@ -186,6 +188,8 @@ class DataModuleFromConfig(pl.LightningDataModule):
             self.datasets["validation"],
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
+            pin_memory=True,
             collate_fn=custom_collate,
         )
 
@@ -194,6 +198,8 @@ class DataModuleFromConfig(pl.LightningDataModule):
             self.datasets["test"],
             batch_size=self.batch_size,
             num_workers=self.num_workers,
+            persistent_workers=True,
+            pin_memory=True,
             collate_fn=custom_collate,
         )
 
@@ -217,20 +223,20 @@ class SetupCallback(Callback):
             os.makedirs(self.cfgdir, exist_ok=True)
 
             print("Project config")
-            # print(self.config.pretty())
+            print(OmegaConf.to_yaml(self.config, resolve=True))
             OmegaConf.save(
                 self.config,
                 os.path.join(self.cfgdir, "{}-project.yaml".format(self.now)),
             )
 
             print("Lightning config")
-            # print(self.lightning_config.pretty())
+            print(OmegaConf.to_yaml(self.lightning_config, resolve=True))
             OmegaConf.save(
                 OmegaConf.create({"lightning": self.lightning_config}),
                 os.path.join(self.cfgdir, "{}-lightning.yaml".format(self.now)),
             )
-
-        else:
+        torch.distributed.barrier()
+        if trainer.global_rank != 0:
             # ModelCheckpoint callback created log directory --- remove it
             if not self.resume and os.path.exists(self.logdir):
                 dst, name = os.path.split(self.logdir)
@@ -488,6 +494,7 @@ if __name__ == "__main__":
                     "save_dir": logdir,
                     "offline": opt.debug,
                     "id": nowname,
+                    "project": opt.project,
                 },
             },
             "testtube": {
